@@ -44,7 +44,12 @@
         >
       </span>
     </el-dialog>
-    <el-table :data="trademarkList" border style="width: 100%; margin: 20px 0">
+    <el-table
+      :data="trademarkList"
+      v-loading="loading"
+      border
+      style="width: 100%; margin: 20px 0"
+    >
       <el-table-column type="index" label="序号" width="80" align="center">
       </el-table-column>
       <el-table-column prop="tmName" label="品牌名称"> </el-table-column>
@@ -98,13 +103,11 @@ export default {
       page: 1, //当前在第几页
       limit: 3, //默认一页显示多少条
       dialogVisible: false,
-      isEditing: false,
+      loading: false,
       trademarkForm: {
         tmName: "",
         logoUrl: "",
       },
-      //修改后的新的数据
-      newEditForm: {},
       rules: {
         tmName: [
           {
@@ -141,6 +144,7 @@ export default {
       // console.log(page,this.limit)
     },
     async getPageList(page, limit) {
+      this.loading = true;
       //page--->当前在第几页, limit--->默认一页显示多少条
       const result = await this.$API.trademark.getPageList(page, limit);
       // console.log(result);
@@ -153,6 +157,7 @@ export default {
       } else {
         this.$message.error("获取分页列表请求失败");
       }
+      this.loading = false;
     },
     //上传之前触发的函数
     beforeAvatarUpload(file) {
@@ -191,17 +196,19 @@ export default {
           console.log(this.trademarkForm); //打印出来的就是需要的图片数据和名称
           //判断是否正在更新数据
           //这里有个关键的点就是，点击修改的时候trademarkForm是有id的,而添加没有
-          const isUpdate = !!trademarkForm.id;
+          const isUpdate = !!this.trademarkForm.id;
+          // console.log(isUpdate); 
           if (isUpdate) {
-            const res = this.trademarkList.find((item) => {
-              return item.id === trademarkForm.id;
-            });
-            console.log(res);
+            const tm = this.trademarkList.find(
+              (tm) => tm.id === this.trademarkForm.id
+            );
+
             if (
-              res.tmName === trademarkForm.tmName &&
-              res.logoUrl === trademarkForm.logoUrl
+              tm.tmName === this.trademarkForm.tmName &&
+              tm.logoUrl === this.trademarkForm.logoUrl
             ) {
-              this.$message.waring("修改前后两次数据应该不一样!");
+              this.$message.warning("不能提交与之前一样的数据");
+              return;
             }
           }
 
@@ -211,9 +218,7 @@ export default {
               this.trademarkForm
             );
           } else {
-            result = await this.$API.trademark.addTrademarkList(
-              this.trademarkForm
-            );
+            result = await this.$API.trademark.addTrademarkList(this.trademarkForm);
           }
           // //表单校验通过就发送增加数据请求
           // const result = await this.$API.trademark.addTrademarkList(
@@ -255,6 +260,9 @@ export default {
         .then(async () => {
           const result = await this.$API.trademark.removeTrademarkList(row.id);
           console.log(result);
+          if (this.trademarkList.length === 1) {
+            this.page -= 1;
+          }
           //重新请求一次数据
           this.getPageList(this.page, this.limit);
           this.$message({
