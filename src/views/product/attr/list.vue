@@ -6,6 +6,7 @@
       <el-button
         type="primary"
         icon="el-icon-plus"
+        @click="addAttValueOnePage"
         :disabled="!categoryList.category3Id"
         >添加属性</el-button
       >
@@ -26,11 +27,11 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150">
-          <template v-slot="{ row }">
+          <template v-slot="{ row, $index}">
             <el-button size="mini" type="warning" @click="update(row)"
               ><i class="el-icon-edit"></i
             ></el-button>
-            <el-button size="mini" type="danger"
+            <el-button size="mini" type="danger" @click="delAttValueOnePage($index)"
               ><i class="el-icon-delete"></i
             ></el-button>
           </template>
@@ -48,7 +49,7 @@
         type="primary"
         :disabled="!attr.attrName"
         icon="el-icon-plus"
-        @click="showOneAttr()"
+        @click="addAttValueTwoPage()"
         >添加属性值</el-button
       >
       <el-button @click="canelAdd">取消</el-button>
@@ -81,7 +82,7 @@
         <el-table-column label="操作">
           <template v-slot="{ row, $index }">
             <el-popconfirm
-              @onConfirm="delOneAttr($index)"
+              @onConfirm="delAttValueTwoPage($index)"
               :title="`您确定删除${row.valueName}吗？`"
             >
               <el-button size="mini" type="danger" slot="reference"
@@ -101,13 +102,17 @@
 </template>
 
 <script>
-import Category from "./category";
+import Category from "@/components/Category/category.vue";
 export default {
   name: "AttrList",
   data() {
     return {
       attrsAllData: [],
-      categoryList: {},
+      categoryList: {
+        // category1Id: "",
+        // category2Id: "",
+        // category3Id: "",
+      },
       // loading: true,
       isShowAdd: true,
       //点击添加属性的时候form表单的数据
@@ -133,17 +138,15 @@ export default {
         this.$message.error(result.message);
       }
     },
-    //点击第一页添加属性按钮触发的函数
-    // addAttr() {
-    //   this.isShowAdd = false;
-    // },
     //点击修改属性按钮显示修改属性的相关页面
     update(row) {
       // console.log(111)
       this.isShowAdd = false;
-      this.attr = {
-        ...row,
-      };
+      // this.attr = {
+      //   ...row,
+      // };
+      //深度克隆
+      this.attr = JSON.parse(JSON.stringify(row))
     },
     //点击span文本需要修改触发的函数
     edited(row) {
@@ -158,27 +161,41 @@ export default {
         this.$refs.input.focus();
       });
     },
-    //点击添加属性值添加新的属性
-    showOneAttr() {
+    addAttValueOnePage() {
+      this.isShowAdd = false;
+      this.attr.attrName = "";
+      this.attr.attrValueList = []
+    },
+    //点击添加属性值添加一条新的新的属性
+    addAttValueTwoPage() {
       this.attr.attrValueList.push({
         edit: true,
       });
       //添加新属性自动获取焦点
-      this.$nextTick(()=>{
-        this.$refs.input.focus()
-      })
+      this.$nextTick(() => {
+        this.$refs.input.focus();
+      });
+    },
+    delAttValueOnePage(index){
+      console.log(index)
     },
     //点击删除删除当前这一条
-    delOneAttr(index) {
+    delAttValueTwoPage(index) {
       console.log(111);
       console.log(index);
       this.attr.attrValueList.splice(index, 1);
     },
     //保存已经修改好的所有属性
     async saveAllAttrs() {
-      //保存后发送保存的请求
-      console.log(111)
-      const result = await this.$API.attrs.getSaveAttrInfo(this.attr);
+      //判断是否是添加的删除还是修改的删除
+      const isAdd = !this.attr.id
+      const data = this.attr
+      if(isAdd){//代表是添加的时候，是没有id的
+        data.categoryId = this.category.category3Id
+        data.categoryLevel = 3
+      }
+      //修改页面保存后发送保存的请求
+      const result = await this.$API.attrs.getSaveAttrInfo(data);
       if (result.code === 200) {
         this.$message.success("保存属性成功");
         this.isShowAdd = true;
