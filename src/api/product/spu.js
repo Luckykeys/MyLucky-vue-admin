@@ -33,11 +33,10 @@ export default {
     });
   },
   //获取spu销售属性的请求  /admin/product/spuSaleAttrList/{spuId}
-  getSaveAttrInfo(spuId) {
+  getSpuSaleAttrList(spuId) {
     return request({
       method: "GET",
-      url: `${api_name}/spuSaleAttrList/${spuId}`,
-      data: attr
+      url: `${api_name}/spuSaleAttrList/${spuId}`
     });
   }
 };
