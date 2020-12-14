@@ -1,9 +1,9 @@
 <template>
   <div>
     <el-card style="margin-top: 20px">
-      <el-form ref="form" label-width="80px">
-        <el-form-item label="SPU名称">
-          <el-input placeholder="SPU名称"></el-input>
+      <el-form ref="form" label-width="80px" :model="spuList">
+        <el-form-item label="SPU名称" prop="spuName">
+          <el-input placeholder="SPU名称" v-model="spuList.spuName"></el-input>
         </el-form-item>
         <el-form-item label="品牌">
           <el-select placeholder="请选择品牌">
@@ -11,8 +11,8 @@
             <el-option label="区域二" value="beijing"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="SPU描述">
-          <el-input type="textarea" placeholder="SPU描述"></el-input>
+        <el-form-item label="SPU描述" prop="description">
+          <el-input type="textarea" placeholder="SPU描述" v-model="spuList.description"></el-input>
         </el-form-item>
         <el-form-item label="SPU图片" prop="logoUrl">
           <!-- Vue.prototype.$BASE_API = process.env.VUE_APP_BASE_API -->
@@ -68,10 +68,14 @@
 <script>
 export default {
   name: "SpuUpdateList",
+  props:{
+    item:Object
+  },
   data() {
     return {
       dialogVisible: false,
-      dialogImageUrl:""
+      dialogImageUrl:"",
+      spuList:this.item
     };
   },
 };

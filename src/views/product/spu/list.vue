@@ -1,8 +1,8 @@
 <template>
   <div>
     <Category></Category>
-    <SpuShowList v-show="isShowList"></SpuShowList>
-    <SpuUpdateList v-show="!isShowList"></SpuUpdateList>
+    <SpuShowList v-if="isShowList" @showUpdateList="showUpdateList"></SpuShowList>
+    <SpuUpdateList v-else :item="item"></SpuUpdateList>
   </div>
 </template>
 
@@ -14,7 +14,14 @@ export default {
   name: "SpuList",
   data(){
     return {
-      isShowList: true
+      isShowList: true,
+      item:{}
+    }
+  },
+  methods:{
+    showUpdateList(row){
+      this.isShowList = false
+      this.item = {...row}
     }
   },
   components: {

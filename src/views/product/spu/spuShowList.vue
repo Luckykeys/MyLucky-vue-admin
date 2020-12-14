@@ -13,7 +13,7 @@
         </el-table-column>
         <el-table-column label="SPU描述" prop="description"></el-table-column>
         <el-table-column label="操作">
-          <template>
+          <template slot-scope="{row}">
             <el-button
               size="mini"
               type="primary"
@@ -23,6 +23,7 @@
               size="mini"
               type="primary"
               icon="el-icon-edit"
+              @click="edit(row)"
             ></el-button>
             <el-button size="mini" type="info" icon="el-icon-info"></el-button>
             <el-button
@@ -33,13 +34,12 @@
           </template>
         </el-table-column>
       </el-table>
-      <!-- @size-change="handleSizeChange"
-      @current-change="handleCurrentChange" -->
       <el-pagination
-
+      @size-change="getPageList(page,$event)"
+      @current-change="getPageList($event,limit)"
       :page-sizes="[3, 6, 9]"
-      :page-size.sync="this.limit"
-      :current-page="this.page"
+      :page-size.sync="limit"
+      :current-page="page"
       layout="prev, pager, next, jumper,sizes, total"
       :total="total"
       class="pagination"
@@ -67,16 +67,20 @@ export default {
     }
   },
   methods:{
+    //点击编辑
+    edit(row){
+      this.$emit("showUpdateList",row)
+    },
     //获取分页列表
     async getPageList(page,limit){
 
       const {category3Id} = this.categoryList
       const result = await this.$API.spu.getSpuList({page,limit,category3Id})
-      console.log(result);
+      // console.log(result);
       if(result.code === 200){
         this.$message.success("请求分页数据成功")
         this.spuList = result.data.records
-        this.total = result.total
+        this.total = result.data.total
       }else{
         this.$message.error(result.message)
       }
@@ -86,13 +90,20 @@ export default {
       this.categoryList = categoryList
       //调用发送请求的方法
       this.getPageList(this.page,this.limit)
+    },
+    clearList(){
+      this.spuList = []
+      this.categoryList.category3Id=""
     }
   },
   mounted(){
     this.$bus.$on("accept",this.handleCategoryAccept)
+    this.$bus.$on("clearList",this.clearList)
+
   },
   beforeDestroy(){
     this.$bus.$off("accept",this.handleCategoryAccept)
+    this.$bus.$off("clearList",this.clearList)
   }
 };
 </script>
