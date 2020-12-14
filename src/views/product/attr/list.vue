@@ -1,6 +1,9 @@
 <template>
   <div>
-    <Category @accept="getAttrsLists" :disabled="!isShowAdd"></Category>
+    <!-- 自定义事件方法 -->
+    <!-- <Category @accept="getAttrsLists" :disabled="!isShowAdd"></Category> -->
+    <!-- 全局事件总线 -->
+    <Category :disabled="!isShowAdd"></Category>
     <el-card style="margin-top: 20px" v-show="isShowAdd">
       <!-- @click="addAttr" -->
       <el-button
@@ -27,11 +30,14 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150">
-          <template v-slot="{ row, $index}">
+          <template v-slot="{ row, $index }">
             <el-button size="mini" type="warning" @click="update(row)"
               ><i class="el-icon-edit"></i
             ></el-button>
-            <el-button size="mini" type="danger" @click="delAttValueOnePage($index)"
+            <el-button
+              size="mini"
+              type="danger"
+              @click="delAttValueOnePage($index)"
               ><i class="el-icon-delete"></i
             ></el-button>
           </template>
@@ -146,7 +152,7 @@ export default {
       //   ...row,
       // };
       //深度克隆
-      this.attr = JSON.parse(JSON.stringify(row))
+      this.attr = JSON.parse(JSON.stringify(row));
     },
     //点击span文本需要修改触发的函数
     edited(row) {
@@ -164,7 +170,7 @@ export default {
     addAttValueOnePage() {
       this.isShowAdd = false;
       this.attr.attrName = "";
-      this.attr.attrValueList = []
+      this.attr.attrValueList = [];
     },
     //点击添加属性值添加一条新的新的属性
     addAttValueTwoPage() {
@@ -176,8 +182,8 @@ export default {
         this.$refs.input.focus();
       });
     },
-    delAttValueOnePage(index){
-      console.log(index)
+    delAttValueOnePage(index) {
+      console.log(index);
     },
     //点击删除删除当前这一条
     delAttValueTwoPage(index) {
@@ -188,11 +194,12 @@ export default {
     //保存已经修改好的所有属性
     async saveAllAttrs() {
       //判断是否是添加的删除还是修改的删除
-      const isAdd = !this.attr.id
-      const data = this.attr
-      if(isAdd){//代表是添加的时候，是没有id的
-        data.categoryId = this.category.category3Id
-        data.categoryLevel = 3
+      const isAdd = !this.attr.id;
+      const data = this.attr;
+      if (isAdd) {
+        //代表是添加的时候，是没有id的
+        data.categoryId = this.category.category3Id;
+        data.categoryLevel = 3;
       }
       //修改页面保存后发送保存的请求
       const result = await this.$API.attrs.getSaveAttrInfo(data);
@@ -208,6 +215,21 @@ export default {
     canelAdd() {
       this.isShowAdd = true;
     },
+    //随意点击级别分类的时候应该清空后面的分类数据
+    clearList() {
+      //清空数据
+      this.attrsAllData = [];
+      //禁用按钮
+      this.categoryList.category3Id = "";
+    },
+  },
+  mounted() {
+    this.$bus.$on("accept", this.getAttrsLists);
+    this.$bus.$on("clearList",this.clearList)
+  },
+  beforeDestroy() {
+    this.$bus.$off("accept", this.getAttrsLists);
+    this.$bus.$off("clearList",this.clearList)
   },
   components: {
     Category,

@@ -85,7 +85,7 @@
       :current-page="page"
       layout="prev, pager, next, jumper,sizes, total"
       :total="total"
-      class="trademark-pagination"
+      class="pagination"
     >
     </el-pagination>
   </div>
@@ -197,7 +197,7 @@ export default {
           //判断是否正在更新数据
           //这里有个关键的点就是，点击修改的时候trademarkForm是有id的,而添加没有
           const isUpdate = !!this.trademarkForm.id;
-          // console.log(isUpdate); 
+          // console.log(isUpdate);
           if (isUpdate) {
             const tm = this.trademarkList.find(
               (tm) => tm.id === this.trademarkForm.id
@@ -288,10 +288,6 @@ export default {
 <style lang="sass" scoped>
 .trademark-logo
   width: 100px
-.trademark-pagination
-  text-align: right
-/deep/.el-pagination__sizes
-  margin-left: 250px
 /deep/.avatar-uploader .el-upload
   border: 1px dashed #d9d9d9
   border-radius: 6px

@@ -85,6 +85,7 @@ export default {
       } else {
         this.$message.error(result.message);
       }
+      this.$bus.$emit("clearList")
     },
     //点击二级分类的时候发送请求请求三级数据
     async handleCategoryS2(category2Id) {
@@ -100,6 +101,7 @@ export default {
       } else {
         this.$message.error(result.message);
       }
+      this.$bus.$emit("clearList")
     },
     //点击三级分类的时候发送请求请求所有数据在下面展示
     handleCategoryS3(category3Id) {
@@ -108,7 +110,7 @@ export default {
         ...this.categoryList, //这个代表的是前面两个的id
         category3Id,
       };
-      this.$emit("accept",categoryList);
+      this.$bus.$emit("accept",categoryList);
       //这里只负责把数据传过去,然后让父组件去发送请求
     },
   },
