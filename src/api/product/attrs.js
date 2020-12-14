@@ -17,7 +17,7 @@ export default {
     });
   },
   //获取三级分类数据的请求
-  getCategoryS2(category2Id) {
+  getCategoryS3(category2Id) {
     return request({
       method: "GET",
       url: `${api_name}/getCategory3/${category2Id}`
@@ -28,6 +28,14 @@ export default {
     return request({
       method: "GET",
       url: `${api_name}/attrInfoList/${category1Id}/${category2Id}/${category3Id}`
+    });
+  },
+  //保存属性发送的请求
+  getSaveAttrInfo(attr){
+    return request({
+      method: "POST",
+      url: `${api_name}/saveAttrInfo`,
+      data:attr
     });
   }
 };
