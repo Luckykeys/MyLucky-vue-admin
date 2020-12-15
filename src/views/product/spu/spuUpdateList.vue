@@ -24,12 +24,21 @@
         </el-form-item>
         <el-form-item label="SPU图片">
           <!-- Vue.prototype.$BASE_API = process.env.VUE_APP_BASE_API -->
+          <!--
+              file-list: 指定显示的图片列表数组 [{name: 'food.jpg', url: 'https://xxx.cdn.com/xxx.jpg'}]
+              action: 指定上传图片的路径
+              list-type: 指定图片列表的风格样式
+              on-preview: 指定点击预览大图的回调函数
+              on-remove: 点击删除的回调函数
+            -->
           <el-upload
-            action="https://jsonplaceholder.typicode.com/posts/"
+            :action="`${$BASE_API}/admin/product/fileUpload`"
             list-type="picture-card"
-            :file-list="ImageList"
+            :file-list="formatImageList"
             :on-preview="handlePictureCardPreview"
             :on-remove="handleRemove"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
           >
             <i class="el-icon-plus"></i>
           </el-upload>
@@ -51,7 +60,7 @@
               :value="saleAttr.id"
             ></el-option>
           </el-select>
-          <el-button type="primary" icon="el-icon-plus">添加销售属性</el-button>
+          <el-button type="primary" icon="el-icon-plus" @click="addAttrValue" :disabled="filterSaleAttrList.length === 0">添加销售属性</el-button>
           <el-table :data="spuSaleAttrList" border style="width: 100%">
             <el-table-column
               type="index"
@@ -62,25 +71,24 @@
             </el-table-column>
             <el-table-column prop="saleAttrName" label="属性名" width="80">
             </el-table-column>
-            <el-table-column prop="address" label="属性值名称列表">
-              <template slot-scope="{ row , $index}">
+            <el-table-column label="属性值名称列表">
+              <template slot-scope="{ row, $index }">
                 <el-tag
                   :key="attrVal.id"
                   v-for="attrVal in row.spuSaleAttrValueList"
                   closable
                   :disable-transitions="false"
-                  @click="handleClose(row,$index)"
+                  @click="handleClose(row, $index)"
                 >
                   {{ attrVal.saleAttrValueName }}
                 </el-tag>
                 <el-input
                   class="input-new-tag"
                   v-if="inputVisible"
-                  
                   ref="saveTagInput"
                   size="small"
-                  @keyup.enter.native="handleInputConfirm(row,$index)"
-                  @blur="handleInputConfirm(row,$index)"
+                  @keyup.enter.native="handleInputConfirm(row, $index)"
+                  @blur="handleInputConfirm(row, $index)"
                 >
                 </el-input>
                 <el-button
@@ -127,7 +135,7 @@ export default {
       spuSaleAttrList: [],
       inputVisible: false, //显示添加的input框
       inputValue: "",
-      dynamicTags:[]
+      dynamicTags: [],
     };
   },
   computed: {
@@ -138,25 +146,67 @@ export default {
         //filter 返回true就是保留需要的，返回false就是需要过滤掉的
         //这里需要过滤掉已经在下面显示的
         return !this.spuSaleAttrList.find((spuSale) => {
-          spuSale.baseSaleAttrId = sale.id;
+          return (spuSale.baseSaleAttrId = sale.id);
         });
+      });
+    },
+    //格式图片
+    //要对这里传入的图片对应的值做处理，因为element中所对应的值和我们的数据值的名字不一样
+    //map 长度不变值变
+    formatImageList() {
+      return this.ImageList.map((item) => {
+        return {
+          uid: item.uid || item.id,
+          name: item.imgName,
+          url: item.imgUrl,
+        };
       });
     },
   },
   methods: {
+    //点击添加属性值按钮添加属性值
+    addAttrValue(){
+
+    },
+    //上传之前触发的函数
+    beforeAvatarUpload(file) {
+      // console.log(file.type);
+      const imgTypes = ["image/jpeg", "image/jpg", "image/png"]; //图片的类型
+      //检测文件类型
+      const isMyTypes = imgTypes.indexOf(file.type) > -1;
+      //检测图片大小是否是小于50kB
+      const isLt = file.size / 1024 < 50;
+      if (!isMyTypes) {
+        this.$message.error("上传SPU图片只能是 JPG/PNG 格式!");
+      }
+      if (!isLt) {
+        this.$message.error("上传SPU图片大小不能超过 2MB!");
+      }
+      return isMyTypes && isLt;
+    },
+    //上传成功后触发的函数
+    handleAvatarSuccess(res, file) {
+      console.log(res, file);
+      this.ImageList.push({
+        uid:file.uid,
+        imgName:file.name,
+        imgUrl:res.data,
+        spuId:this.spuList.id
+      });
+    },
     //点击标签的关闭x则删除这一项
-    handleClose(row,index){
-      row.spuSaleAttrList.splice(index,1)
+    handleClose(row, index) {
+      row.spuSaleAttrList.splice(index, 1);
     },
     //失去焦点保存数据
-    handleInputConfirm(row,index) {
-        let inputValue = this.inputValue;
-        if (inputValue) {
-          row.spuSaleAttrList.push(inputValue);
-        }
-        this.inputVisible = false;
-        this.inputValue = '';
-      },
+    handleInputConfirm(row, index) {
+      let inputValue = this.inputValue;
+      if (inputValue) {
+        row.spuSaleAttrList.push(inputValue);
+      }
+      this.inputVisible = false;
+      this.inputValue = "";
+    },
     //点击添加属性值
     showInput(index) {
       this.inputVisible = true;
@@ -188,15 +238,7 @@ export default {
       // console.log(result);
       if (result.code === 200) {
         this.$message.success("获取图片数据成功");
-        //要对这里传入的图片对应的值做处理，因为element中所对应的值和我们的数据值得名字不一样
-        //map 长度不变值变
-        this.ImageList = result.data.map((item) => {
-          return {
-            id: item.id,
-            name: item.imgName,
-            url: item.imgUrl,
-          };
-        });
+        this.ImageList = result.data;
       } else {
         this.$message.error(result.message);
       }

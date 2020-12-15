@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card style="margin-top: 20px">
-      <el-button type="primary" icon="el-icon-plus">添加SPU</el-button>
+      <el-button type="primary" icon="el-icon-plus" :disabled="!categoryList.category3Id">添加SPU</el-button>
       <el-table
         :data="spuList"
         border
