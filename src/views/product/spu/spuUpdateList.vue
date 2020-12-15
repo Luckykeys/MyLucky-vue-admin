@@ -1,7 +1,12 @@
 <template>
   <div>
     <el-card style="margin-top: 20px">
-      <el-form ref="form" label-width="80px" :model="spuList">
+      <el-form
+        label-width="80px"
+        :model="spuList"
+        :rules="rules"
+        ref="spuRuleForm"
+      >
         <el-form-item label="SPU名称" prop="spuName">
           <el-input placeholder="SPU名称" v-model="spuList.spuName"></el-input>
         </el-form-item>
@@ -22,7 +27,7 @@
             v-model="spuList.description"
           ></el-input>
         </el-form-item>
-        <el-form-item label="SPU图片">
+        <el-form-item label="SPU图片" prop="spuImageList">
           <!-- Vue.prototype.$BASE_API = process.env.VUE_APP_BASE_API -->
           <!--
               file-list: 指定显示的图片列表数组 [{name: 'food.jpg', url: 'https://xxx.cdn.com/xxx.jpg'}]
@@ -47,20 +52,27 @@
           </el-dialog>
           <span>只能上传jpg/png文件，且不超过50kb</span>
         </el-form-item>
-        <!-- prop="saleAttrList" 作为表单校验 -->
-        <el-form-item label="销售属性" prop="saleAttrList">
+        <!-- prop="saleAttrId" 作为表单校验 -->
+        <!-- <el-form-item label="销售属性" prop="saleAttrId"> -->
+        <el-form-item label="销售属性" prop="sale">
           <el-select
             :placeholder="`还剩${filterSaleAttrList.length}个未选择`"
-            v-model="spuList.saleAttrList"
+            v-model="spuList.sale"
           >
             <el-option
               v-for="saleAttr in filterSaleAttrList"
               :key="saleAttr.id"
               :label="saleAttr.name"
-              :value="saleAttr.id"
+              :value="`${saleAttr.id}-${saleAttr.name}`"
             ></el-option>
           </el-select>
-          <el-button type="primary" icon="el-icon-plus" @click="addAttrValue" :disabled="filterSaleAttrList.length === 0">添加销售属性</el-button>
+          <el-button
+            type="primary"
+            icon="el-icon-plus"
+            @click="addSpuAttrValue"
+            :disabled="!spuList.sale"
+            >添加销售属性</el-button
+          >
           <el-table :data="spuSaleAttrList" border style="width: 100%">
             <el-table-column
               type="index"
@@ -72,47 +84,53 @@
             <el-table-column prop="saleAttrName" label="属性名" width="80">
             </el-table-column>
             <el-table-column label="属性值名称列表">
-              <template slot-scope="{ row, $index }">
+              <template slot-scope="{ row }">
                 <el-tag
+                  @close="delTag(index, row)"
                   :key="attrVal.id"
-                  v-for="attrVal in row.spuSaleAttrValueList"
+                  v-for="(attrVal, index) in row.spuSaleAttrValueList"
                   closable
-                  :disable-transitions="false"
-                  @click="handleClose(row, $index)"
                 >
                   {{ attrVal.saleAttrValueName }}
                 </el-tag>
                 <el-input
                   class="input-new-tag"
-                  v-if="inputVisible"
-                  ref="saveTagInput"
-                  size="small"
-                  @keyup.enter.native="handleInputConfirm(row, $index)"
-                  @blur="handleInputConfirm(row, $index)"
+                  v-if="row.edit"
+                  v-model="attrText"
+                  ref="input"
+                  size="mini"
+                  @keyup.enter.native="editCompleted(row)"
+                  @blur="editCompleted(row)"
+                  autofocus
                 >
                 </el-input>
                 <el-button
                   v-else
                   class="button-new-tag"
                   size="small"
-                  @click="showInput($index)"
+                  @click="showInput(row)"
                   >+添加</el-button
                 >
               </template>
             </el-table-column>
             <el-table-column prop="address" label="操作" width="80">
-              <template>
-                <el-button
-                  size="mini"
-                  type="danger"
-                  icon="el-icon-delete"
-                ></el-button>
+              <template slot-scope="{ row, $index }">
+                <el-popconfirm
+                  @onConfirm="delSpuValueList($index)"
+                  :title="`您确定删除${row.saleAttrName}吗？`"
+                >
+                  <el-button size="mini" type="danger" slot="reference"
+                    ><i class="el-icon-delete"></i
+                  ></el-button>
+                </el-popconfirm>
               </template>
             </el-table-column>
           </el-table>
         </el-form-item>
-        <el-button type="primary">保存</el-button>
-        <el-button>取消</el-button>
+        <el-form-item>
+          <el-button type="primary" @click="save">保存</el-button>
+          <el-button>取消</el-button>
+        </el-form-item>
       </el-form>
     </el-card>
   </div>
@@ -133,9 +151,22 @@ export default {
       ImageList: [],
       saleAttrList: [],
       spuSaleAttrList: [],
-      inputVisible: false, //显示添加的input框
-      inputValue: "",
       dynamicTags: [],
+      attrText: "",
+      rules: {
+        spuName: [
+          { required: true, message: "请输入SPU名称", trigger: "blur" },
+        ],
+        tmId: [{ required: true, message: "请输入SPU品牌", trigger: "blur" }],
+        description: [
+          { required: true, message: "请输入SPU描述", trigger: "blur" },
+        ],
+        /* 自定义校验 */
+        spuImageList: [
+          { required: true, validator: this.spuImageListValidator },
+        ],
+        sale: [{ required: true, validator: this.saleValidator }],
+      },
     };
   },
   computed: {
@@ -146,7 +177,7 @@ export default {
         //filter 返回true就是保留需要的，返回false就是需要过滤掉的
         //这里需要过滤掉已经在下面显示的
         return !this.spuSaleAttrList.find((spuSale) => {
-          return (spuSale.baseSaleAttrId = sale.id);
+          return spuSale.baseSaleAttrId === sale.id;
         });
       });
     },
@@ -163,10 +194,92 @@ export default {
       });
     },
   },
+  /* spuSaleAttrList:Array[3]
+          baseSaleAttrId:3
+          id:7510
+          saleAttrName:"选择版本"
+          spuId:13
+          spuSaleAttrValueList:
+                baseSaleAttrId:2
+                id:3223
+                isChecked:null
+                saleAttrName:"选择版本"
+                saleAttrValueName:"移动"
+                spuId:13
+  */
   methods: {
-    //点击添加属性值按钮添加属性值
-    addAttrValue(){
+    save() {
+      this.$refs.spuRuleForm.validate((valid) => {
+        if (valid) {
+          alert("submit!");
+        } else {
+          console.log("error submit!!");
+          return false;
+        }
+      });
+    },
+    //校验图片至少要上传一张
+    spuImageListValidator(rule, value, callback) {
+      console.log(rule, value, callback);
+      if (this.ImageList.length > 0) {
+        callback();
+        return;
+      }
+      callback(new Error("请至少上传一张图片"));
+    },
+    //校验销售属性至少要上传一个，而且销售属性值也必须要有一个
+    saleValidator() {
+      if (this.spuSaleAttrList.length === 0) {
+        callback(new Error("请至少输入一个销售属性"));
+        return;
+      }
 
+      //判断销售属性值是否有
+      const isNoHaveSaleVal = this.spuSaleAttrList.some((item) => {
+        return item.spuSaleAttrValueList.length === 0;
+      });
+
+      if (isNoHaveSaleVal) {
+        callback(new Error("请至少输入一个销售属性值"));
+        return;
+      }
+      callback();
+    },
+    //删除单个tag标签
+    delTag(index, row) {
+      row.spuSaleAttrValueList.splice(index, 1);
+    },
+    //删除单个属性值
+    delSpuValueList(index) {
+      this.spuSaleAttrList.splice(index, 1);
+    },
+    //点击添加属性值按钮添加属性值
+    //方法一:
+    // addSpuAttrValue() {
+    //   const { id, saleAttrId } = this.spuList;
+    //   const sale = this.saleAttrList.find((sale) => sale.id === saleAttrId);
+    //   console.log(sale);
+    //   this.spuSaleAttrList.push({
+    //     baseSaleAttrId: sale.id,
+    //     saleAttrName: sale.name,
+    //     saleAttrValueName: this.attrText,
+    //     spuId: id,
+    //     spuSaleAttrValueList: [],
+    //   });
+    //   this.spuList.saleAttrId = "";
+    // },
+    //方法二:
+    addSpuAttrValue() {
+      const { id, sale } = this.spuList;
+      const [baseSaleAttrId, saleAttrName] = sale.split("-");
+      this.spuSaleAttrList.push({
+        baseSaleAttrId: +baseSaleAttrId,
+        saleAttrName,
+        spuId: id,
+        spuSaleAttrValueList: [],
+      });
+      //清空选中的销售属性的id和name
+      this.spuList.sale = "";
     },
     //上传之前触发的函数
     beforeAvatarUpload(file) {
@@ -186,32 +299,41 @@ export default {
     },
     //上传成功后触发的函数
     handleAvatarSuccess(res, file) {
-      console.log(res, file);
+      // console.log(res, file);
       this.ImageList.push({
-        uid:file.uid,
-        imgName:file.name,
-        imgUrl:res.data,
-        spuId:this.spuList.id
+        uid: file.uid,
+        imgName: file.name,
+        imgUrl: res.data,
+        spuId: this.spuList.id,
       });
     },
-    //点击标签的关闭x则删除这一项
-    handleClose(row, index) {
-      row.spuSaleAttrList.splice(index, 1);
+    //删除图片
+    handleRemove(file, fileList) {
+      // console.log(file, fileList);
+      this.ImageList = this.ImageList.filter((img) => {
+        return img.imgUrl !== file.url;
+      });
     },
-    //失去焦点保存数据
-    handleInputConfirm(row, index) {
-      let inputValue = this.inputValue;
-      if (inputValue) {
-        row.spuSaleAttrList.push(inputValue);
+    //编辑完成失去焦点
+    editCompleted(row, index) {
+      // console.log(row, index);
+      //如果没有输入值就则返回标签的样子
+      if (this.attrText) {
+        row.spuSaleAttrValueList.push({
+          baseSaleAttrId: row.baseSaleAttrId,
+          saleAttrName: row.saleAttrName,
+          saleAttrValueName: this.attrText,
+          spuId: row.spuId,
+        });
+        this.attrText = "";
       }
-      this.inputVisible = false;
-      this.inputValue = "";
+      row.edit = false;
     },
-    //点击添加属性值
-    showInput(index) {
-      this.inputVisible = true;
+    //点击编辑添加属性值
+    showInput(row) {
+      this.$set(row, "edit", true);
       this.$nextTick(() => {
-        this.$refs[index].focus();
+        this.$refs.input.focus();
       });
     },
     //处理图片的放大函数
@@ -219,7 +341,6 @@ export default {
       this.dialogImageUrl = file.url;
       this.dialogVisible = true;
     },
-    handleRemove() {},
     //获取品牌数据的请求
     async getTrademarkList() {
       const result = await this.$API.spu.getTrademarkList();

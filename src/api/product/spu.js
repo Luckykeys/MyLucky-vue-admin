@@ -38,5 +38,13 @@ export default {
       method: "GET",
       url: `${api_name}/spuSaleAttrList/${spuId}`
     });
+  },
+  // 保存更新spu属性的请求     /admin/product/updateSpuInfo
+  updateSpuInfo(spu){
+    return request({
+      method:"POST",
+      url:`${api_name}/updateSpuInfo`,
+      data:spu
+    })
   }
 };
