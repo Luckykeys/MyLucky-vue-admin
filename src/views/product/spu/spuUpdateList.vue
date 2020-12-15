@@ -209,18 +209,30 @@ export default {
   */
   methods: {
     save() {
-      this.$refs.spuRuleForm.validate((valid) => {
+      this.$refs.spuRuleForm.validate(async (valid) => {
         if (valid) {
-          alert("submit!");
+          //收集需要发送请求时候携带的数据
+          const spu = {
+            ...this.spuList,
+            spuImageList: this.ImageList,
+            spuSaleAttrList: this.spuSaleAttrList,
+          };
+          const result = await this.$API.spu.updateSpuInfo(spu);
+          if (result.code === 200) {
+            //保存成功后需要跳转页面
+            this.$emit("showList",this.spuList.category3Id)
+            this.$message.success("更新SPU成功");
+          } else {
+            this.$message.error(result.message);
+          }
         } else {
-          console.log("error submit!!");
-          return false;
+          this.$message.error("更新SPU失败");
         }
       });
     },
     //校验图片至少要上传一张
     spuImageListValidator(rule, value, callback) {
-      console.log(rule, value, callback);
+      // console.log(rule, value, callback);
       if (this.ImageList.length > 0) {
         callback();
         return;
@@ -228,7 +240,7 @@ export default {
       callback(new Error("请至少上传一张图片"));
     },
     //校验销售属性至少要上传一个，而且销售属性值也必须要有一个
-    saleValidator() {
+    saleValidator(rule, value, callback) {
       if (this.spuSaleAttrList.length === 0) {
         callback(new Error("请至少输入一个销售属性"));
         return;
