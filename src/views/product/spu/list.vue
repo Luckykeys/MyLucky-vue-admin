@@ -3,9 +3,11 @@
     <Category :disabled="!isShowList"></Category>
     <SpuShowList
       v-if="isShowList"
+      @showList="!showList"
       @showUpdateList="showUpdateList"
     ></SpuShowList>
     <SpuUpdateList v-else :item="item" @showList="showList"></SpuUpdateList>
+    <SpuDesList></SpuDesList>
   </div>
 </template>
 
@@ -13,6 +15,7 @@
 import Category from "@/components/Category/category.vue";
 import SpuShowList from "./spuShowList";
 import SpuUpdateList from "./spuUpdateList";
+import SpuDesList from "./spuDesList"
 export default {
   name: "SpuList",
   data() {
@@ -38,6 +41,7 @@ export default {
     Category,
     SpuShowList,
     SpuUpdateList,
+    SpuDesList
   },
 };
 </script>

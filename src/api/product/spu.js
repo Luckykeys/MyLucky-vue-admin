@@ -46,5 +46,13 @@ export default {
       url:`${api_name}/updateSpuInfo`,
       data:spu
     })
+  },
+  // 保存添加spu属性的请求     /admin/product/saveSpuInfo
+  saveSpuInfo(spu){
+    return request({
+      method:"POST",
+      url:`${api_name}/saveSpuInfo`,
+      data:spu
+    })
   }
 };

@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card style="margin-top: 20px">
-      <el-button type="primary" icon="el-icon-plus" :disabled="!categoryList.category3Id">添加SPU</el-button>
+      <el-button type="primary" icon="el-icon-plus" :disabled="!categoryList.category3Id" @click="addNewSpu">添加SPU</el-button>
       <el-table
         :data="spuList"
         border
@@ -18,6 +18,7 @@
               size="mini"
               type="primary"
               icon="el-icon-plus"
+              @click="spuDesList"
             ></el-button>
             <el-button
               size="mini"
@@ -68,6 +69,11 @@ export default {
     };
   },
   methods: {
+    spuDesList(){},
+    //点击添加新的SPU
+    addNewSpu(){
+      this.$emit("showUpdateList",{category3Id:this.categoryList.category3Id});
+    },
     //点击编辑
     edit(row) {
       this.$emit("showUpdateList", row);

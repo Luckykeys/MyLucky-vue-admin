@@ -217,11 +217,16 @@ export default {
             spuImageList: this.ImageList,
             spuSaleAttrList: this.spuSaleAttrList,
           };
-          const result = await this.$API.spu.updateSpuInfo(spu);
+          let result;
+          if (this.spuList.id) {
+            result = await this.$API.spu.updateSpuInfo(spu);
+          } else {
+            result = await this.$API.spu.saveSpuInfo(spu);
+          }
           if (result.code === 200) {
             //保存成功后需要跳转页面
-            this.$emit("showList",this.spuList.category3Id)
-            this.$message.success("更新SPU成功");
+            this.$emit("showList", this.spuList.category3Id);
+            this.$message.success(`${this.spuList.id ? "更新" : "添加"}SPU成功`);
           } else {
             this.$message.error(result.message);
           }
@@ -400,9 +405,11 @@ export default {
   },
   mounted() {
     this.getTrademarkList();
-    this.getSpuImageList();
     this.getBaseSaleAttrList();
-    this.getSpuSaleAttrList();
+    if (this.spuList.id) {
+      this.getSpuImageList();
+      this.getSpuSaleAttrList();
+    }
   },
 };
 </script>
