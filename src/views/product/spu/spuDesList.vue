@@ -1,66 +1,175 @@
 <template>
   <div>
-    <!-- <el-form label-width="80px">
-      <el-form-item label="SPU名称">
-        <span></span>
-      </el-form-item>
-      <el-form-item label="活动区域">
-        <el-select  placeholder="请选择活动区域">
-          <el-option label="区域一" value="shanghai"></el-option>
-          <el-option label="区域二" value="beijing"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="活动时间">
-        <el-col :span="11">
-          <el-date-picker
-            type="date"
-            placeholder="选择日期"
-
-            style="width: 100%"
-          ></el-date-picker>
-        </el-col>
-        <el-col class="line" :span="2">-</el-col>
-        <el-col :span="11">
-          <el-time-picker
-            placeholder="选择时间"
-
-            style="width: 100%"
-          ></el-time-picker>
-        </el-col>
-      </el-form-item>
-      <el-form-item label="即时配送">
-        <el-switch v-model="form.delivery"></el-switch>
-      </el-form-item>
-      <el-form-item label="活动性质">
-        <el-checkbox-group v-model="form.type">
-          <el-checkbox label="美食/餐厅线上活动" name="type"></el-checkbox>
-          <el-checkbox label="地推活动" name="type"></el-checkbox>
-          <el-checkbox label="线下主题活动" name="type"></el-checkbox>
-          <el-checkbox label="单纯品牌曝光" name="type"></el-checkbox>
-        </el-checkbox-group>
-      </el-form-item>
-      <el-form-item label="特殊资源">
-        <el-radio-group v-model="form.resource">
-          <el-radio label="线上品牌商赞助"></el-radio>
-          <el-radio label="线下场地免费"></el-radio>
-        </el-radio-group>
-      </el-form-item>
-      <el-form-item label="活动形式">
-        <el-input type="textarea" v-model="form.desc"></el-input>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="onSubmit">立即创建</el-button>
-        <el-button>取消</el-button>
-      </el-form-item>
-    </el-form> -->
+    <el-card>
+      <el-form label-width="80px" :model="sku">
+        <el-form-item label="SPU名称" prop="spuName">
+          <span>{{ spuList.spuName }}</span>
+        </el-form-item>
+        <el-form-item label="SKU名称" prop="skuName">
+          <el-input placeholder="SKU 名称" v-model="sku.skuName"></el-input>
+        </el-form-item>
+        <el-form-item label="价格(元)" prop="price">
+          <el-input-number
+            align="left"
+            style="width: 300px"
+            controls-position="right"
+            :min="0"
+            v-model="num"
+            placeholder="SKU价格"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="重量(千克)">
+          <el-input-number
+            controls-position="right"
+            :min="0"
+            v-model="num"
+            placeholder="SKU重量"
+            style="width: 300px"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="规格描述" prop="description">
+          <el-input type="textarea" placeholder="SKU规格描述">{{spuList.description}}</el-input>
+        </el-form-item>
+        <el-form-item label="平台属性">
+          <div
+            class="spuDesList-select-container"
+            v-for="attr in attrsAllData"
+            :key="attr.id"
+          >
+            <span>{{ attr.attrName }}</span>
+            <el-select placeholder="请选择" v-model="spu.attrId">
+              <el-option
+                v-for="value in attr.attrValueList"
+                :key="value.id"
+                :label="value.valueName"
+                :value="value.id"
+              ></el-option>
+            </el-select>
+          </div>
+        </el-form-item>
+        <el-form-item label="销售属性">
+          <div
+            v-for="sale in spuSaleAttrList"
+            :key="sale.id"
+            class="spuDesList-select-container"
+          >
+            <span>{{ sale.saleAttrName }}</span>
+            <el-select placeholder="请选择">
+              <el-option
+                v-for="value in sale.spuSaleAttrValueList"
+                :key="value.id"
+                :label="value.saleAttrValueName"
+                :value="value.id"
+              ></el-option>
+            </el-select>
+          </div>
+        </el-form-item>
+        <el-form-item label="图片列表">
+          <el-table
+            :data="ImageList"
+            tooltip-effect="dark"
+            style="width: 100%; margin: 20px 0"
+            border
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" width="55" prop="isCheck">
+            </el-table-column>
+            <el-table-column label="图片">
+              <template slot-scope="{ row }">
+                <img :src="row.imgUrl" alt="row.imgName" />
+              </template>
+            </el-table-column>
+            <el-table-column prop="imgName" label="名称"></el-table-column>
+            <el-table-column label="操作">
+              <template>
+                <el-button type="primary" size="mini">设为默认</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary">保存</el-button>
+          <el-button>取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
   </div>
 </template>
 
 <script>
 export default {
   name: "SpuDesList",
+  props: {
+    spuItem: Object,
+  },
+  data() {
+    return {
+      num:0,
+      spuList: this.spuItem, //传过来的spu数据
+      sku: {}, // sku数据
+      ImageList: [],
+      spuSaleAttrList: [],
+      attrsAllData: [],
+    };
+  },
+  methods: {
+    handleSelectionChange() {},
+    //获取所有图片数据
+    async getSpuImageList() {
+      const { id } = this.spuList;
+      const result = await this.$API.spu.getSpuImageList(id);
+      // console.log(result);
+      if (result.code === 200) {
+        this.$message.success("获取图片数据成功");
+        this.ImageList = result.data;
+      } else {
+        this.$message.error(result.message);
+      }
+    },
+    //获取单个spu销售属性的请求
+    async getSpuSaleAttrList() {
+      const { id } = this.spuList;
+      const result = await this.$API.spu.getSpuSaleAttrList(id);
+      if (result.code === 200) {
+        this.$message.success("获取SPU销售属性数据成功");
+        this.spuSaleAttrList = result.data;
+      } else {
+        this.$message.error(result.message);
+      }
+    },
+    //接收子组件传过来的result.data数据
+    async getAttrsLists(categoryList) {
+      // console.log(categoryList);
+      //categoryList 是需要的三个id,因为子组件只是简单的传递数据，父组件发送请求
+      // this.categoryList = categoryList;
+      const result = await this.$API.attrs.getCategoryAllList({
+        category1Id: this.spuList.category1Id,
+        category2Id: this.spuList.category2Id,
+        category3Id: this.spuList.category3Id,
+      });
+      console.log(result);
+      if (result.code === 200) {
+        //发送请求回来的数据给到定义的数据进行遍历展示
+        this.attrsAllData = result.data;
+        this.$message.success("请求数据成功");
+      } else {
+        this.$message.error(result.message);
+      }
+    },
+  },
+  mounted() {
+    this.getSpuImageList();
+    this.getSpuSaleAttrList();
+    this.getAttrsLists();
+  },
 };
 </script>
 
-<style lang="less" scoped>
+<style lang="sass" scoped>
+>>>.el-input-number .el-input__inner
+  text-align: left
+
+.spuDesList-select-container
+  display: inline-block
+  margin-right: 20px
 </style>

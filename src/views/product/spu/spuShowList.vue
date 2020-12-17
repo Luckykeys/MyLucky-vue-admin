@@ -18,7 +18,7 @@
               size="mini"
               type="primary"
               icon="el-icon-plus"
-              @click="spuDesList"
+              @click="toSpuDesList(row,categoryList)"
             ></el-button>
             <el-button
               size="mini"
@@ -69,7 +69,9 @@ export default {
     };
   },
   methods: {
-    spuDesList(){},
+    toSpuDesList(row,categoryList){
+      this.$emit("showSpuDesList",{...row,...categoryList})
+    },
     //点击添加新的SPU
     addNewSpu(){
       this.$emit("showUpdateList",{category3Id:this.categoryList.category3Id});
