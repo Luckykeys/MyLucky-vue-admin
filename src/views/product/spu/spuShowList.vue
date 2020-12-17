@@ -51,15 +51,16 @@
 </template>
 
 <script>
+import {mapState} from "vuex"
 export default {
   name: "SpuShowList",
   data() {
     return {
-      categoryList: {
-        category1Id: "", //选中的代表一级分类数据的id
-        category2Id: "",
-        category3Id: "",
-      },
+      // categoryList: {
+      //   category1Id: "", //选中的代表一级分类数据的id
+      //   category2Id: "",
+      //   category3Id: "",
+      // },
       //spu数据
       spuList: [],
       page: 1,
@@ -67,6 +68,27 @@ export default {
       total: 0,
       loading: false,
     };
+  },
+  computed:{
+    ...mapState({
+      categoryList:(state)=>state.category.categoryList
+    })
+  },
+  watch:{
+    //监视三级分类列表然后发送请求下面展示数据
+    'categoryList.category3Id':{
+      handler(category3Id){
+        if(!category3Id) return;
+      this.getPageList(this.page, this.limit)
+      },
+      immediate:true //一上来就调用一次
+    },
+    'categoryList.category1Id'(){
+      this.clearList()
+    },
+    'categoryList.category2Id'(){
+      this.clearList()
+    }
   },
   methods: {
     toSpuDesList(row,categoryList){
@@ -100,24 +122,26 @@ export default {
       this.loading = false;
     },
     //给需要触发全局事件总线绑定的事件
-    handleCategoryAccept(categoryList) {
-      this.categoryList = categoryList;
-      //调用发送请求的方法
-      this.getPageList(this.page, this.limit);
-    },
+    // handleCategoryAccept(categoryList) {
+    //   // this.categoryList = categoryList;
+    //   //调用发送请求的方法
+    //   this.getPageList(this.page, this.limit);
+    // },
     clearList() {
       this.spuList = [];
-      this.categoryList.category3Id = "";
+      this.page = 1;
+      this.limit = 3;
+      this.total = 0
     },
   },
-  mounted() {
-    this.$bus.$on("accept", this.handleCategoryAccept);
-    this.$bus.$on("clearList", this.clearList);
-  },
-  beforeDestroy() {
-    this.$bus.$off("accept", this.handleCategoryAccept);
-    this.$bus.$off("clearList", this.clearList);
-  },
+  // mounted() {
+  //   this.$bus.$on("accept", this.handleCategoryAccept);
+  //   this.$bus.$on("clearList", this.clearList);
+  // },
+  // beforeDestroy() {
+  //   this.$bus.$off("accept", this.handleCategoryAccept);
+  //   this.$bus.$off("clearList", this.clearList);
+  // },
 };
 </script>
 

@@ -42,9 +42,10 @@ export default {
     //显示showList页面的函数
     showList(category) {
       this.isShowList = true;
-      this.$nextTick(() => {
-        this.$bus.$emit("accept", category);
-      });
+      // this.$nextTick(() => {
+      //   this.$bus.$emit("accept", category);
+      // });
+      // 通知spuShowList重新发送请求
     },
   },
   components: {

@@ -108,17 +108,18 @@
 </template>
 
 <script>
+import {mapState} from "vuex"
 import Category from "@/components/Category/category.vue";
 export default {
   name: "AttrList",
   data() {
     return {
       attrsAllData: [],
-      categoryList: {
+      // categoryList: {
         // category1Id: "",
         // category2Id: "",
         // category3Id: "",
-      },
+      // },
       // loading: true,
       isShowAdd: true,
       //点击添加属性的时候form表单的数据
@@ -128,13 +129,31 @@ export default {
       },
     };
   },
+  computed:{
+    ...mapState({
+      categoryList:(state)=>state.category.categoryList
+    })
+  },
+  watch:{
+    //监视三级分类列表然后发送请求下面展示数据
+    'categoryList.category3Id'(category3Id){
+      if(!category3Id) return;
+      this.getAttrsLists()
+    },
+    'categoryList.category1Id'(){
+      this.clearList()
+    },
+    'categoryList.category2Id'(){
+      this.clearList()
+    }
+  },
   methods: {
     //接收子组件传过来的result.data数据
-    async getAttrsLists(categoryList) {
+    async getAttrsLists() {
       // console.log(categoryList);
       //categoryList 是需要的三个id,因为子组件只是简单的传递数据，父组件发送请求
-      this.categoryList = categoryList;
-      const result = await this.$API.attrs.getCategoryAllList(categoryList);
+      // this.categoryList = categoryList;
+      const result = await this.$API.attrs.getCategoryAllList(this.categoryList);
       console.log(result);
       if (result.code === 200) {
         //发送请求回来的数据给到定义的数据进行遍历展示
@@ -223,14 +242,14 @@ export default {
       this.categoryList.category3Id = "";
     },
   },
-  mounted() {
-    this.$bus.$on("accept", this.getAttrsLists);
-    this.$bus.$on("clearList",this.clearList)
-  },
-  beforeDestroy() {
-    this.$bus.$off("accept", this.getAttrsLists);
-    this.$bus.$off("clearList",this.clearList)
-  },
+  // mounted() {
+  //   this.$bus.$on("accept", this.getAttrsLists);
+  //   this.$bus.$on("clearList",this.clearList)
+  // },
+  // beforeDestroy() {
+  //   this.$bus.$off("accept", this.getAttrsLists);
+  //   this.$bus.$off("clearList",this.clearList)
+  // },
   components: {
     Category,
   },

@@ -137,6 +137,7 @@
 </template>
 
 <script>
+import {mapState} from "vuex"
 export default {
   name: "SpuUpdateList",
   props: {
@@ -170,6 +171,9 @@ export default {
     };
   },
   computed: {
+    ...mapState({
+      categoryList:(state)=>state.category.categoryList
+    }),
     //从所有属性中过滤已经显示在下面的数据
     /* 使用数组的filter从所有的销售属性中过滤出需要保留的数据，如果下面已经有了就需要展示了，没有的话就需要展示 */
     filterSaleAttrList() {
@@ -209,7 +213,8 @@ export default {
   */
   methods: {
     backShowList(spuList){
-      this.$emit("showList",{category1Id:this.spuList.category1Id,category2Id:this.spuList.category2Id,category3Id:this.spuList.category3Id})
+      // this.$emit("showList",{category1Id:this.spuList.category1Id,category2Id:this.spuList.category2Id,category3Id:this.spuList.category3Id})
+      this.$emit("showList")
     },
     save() {
       this.$refs.spuRuleForm.validate(async (valid) => {
@@ -228,7 +233,9 @@ export default {
           }
           if (result.code === 200) {
             //保存成功后需要跳转页面
-            this.$emit("showList", this.spuList.category3Id);
+            // this.$emit("showList", this.spuList.category3Id);
+            this.$emit("showList");
+
             this.$message.success(`${this.spuList.id ? "更新" : "添加"}SPU成功`);
           } else {
             this.$message.error(result.message);
