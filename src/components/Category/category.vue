@@ -53,9 +53,10 @@
 </template>
 
 <script>
+import { mapState, mapActions, mapMutations } from "vuex";
 export default {
   name: "Category",
-  props:["disabled"],
+  props: ["disabled"],
   data() {
     return {
       categoryList: {
@@ -63,12 +64,26 @@ export default {
         category2Id: "",
         category3Id: "",
       },
-      category1ListData: [], //一级分类数据
-      category2ListData: [],
-      category3ListData: [],
+      // category1ListData: [], //一级分类数据
+      // category2ListData: [],
+      // category3ListData: [],
     };
   },
+  /* 'some/nested/module/foo', // -> this['some/nested/module/foo']() */
+  computed: {
+    ...mapState({
+      category1ListData: (state) => state.category.category1ListData,
+      category2ListData: (state) => state.category.category2ListData,
+      category3ListData: (state) => state.category.category3ListData,
+    }),
+  },
   methods: {
+    ...mapActions([
+      "category/getCategory1ListData",
+      "category/getCategory2ListData",
+      "category/getCategory3ListData",
+    ]),
+    ...mapMutations(["category/SELECT_CATEGORY3ID"]),
     //选中值发生变化时触发的函数	参数是目前的选中值
     //点击一级分类的时候发送请求请求二级数据
     async handleCategoryS1(category1Id) {
@@ -76,53 +91,57 @@ export default {
       //再次请求的时候应该把二级分类和三级分类都删除掉
       this.categoryList.category2Id = "";
       this.categoryList.category3Id = "";
-      this.category2ListData = [];
-      this.category3ListData = [];
-      const result = await this.$API.attrs.getCategoryS2(category1Id);
-      // console.log(result);
-      if (result.code === 200) {
-        this.category2ListData = result.data;
-      } else {
-        this.$message.error(result.message);
-      }
-      this.$bus.$emit("clearList")
+      // this.category2ListData = [];
+      // this.category3ListData = [];
+      // const result = await this.$API.attrs.getCategoryS2(category1Id);
+      // // console.log(result);
+      // if (result.code === 200) {
+      //   this.category2ListData = result.data;
+      // } else {
+      //   this.$message.error(result.message);
+      // }
+      this['category/getCategory2ListData'](category1Id);
+      this.$bus.$emit("clearList");
     },
     //点击二级分类的时候发送请求请求三级数据
     async handleCategoryS2(category2Id) {
       // console.log(category2Id);
       //再次请求的时候应该把三级分类都删除掉
       this.categoryList.category3Id = "";
-      this.category3ListData = [];
+      // this.category3ListData = [];
 
-      const result = await this.$API.attrs.getCategoryS3(category2Id);
-      // console.log(result);
-      if (result.code === 200) {
-        this.category3ListData = result.data;
-      } else {
-        this.$message.error(result.message);
-      }
-      this.$bus.$emit("clearList")
+      // const result = await this.$API.attrs.getCategoryS3(category2Id);
+      // // console.log(result);
+      // if (result.code === 200) {
+      //   this.category3ListData = result.data;
+      // } else {
+      //   this.$message.error(result.message);
+      // }
+      this['category/getCategory3ListData'](this.categoryList.category2Id);
+      this.$bus.$emit("clearList");
     },
-    //点击三级分类的时候发送请求请求所有数据在下面展示
+    //点击三级分类的时候,只负责把数据传过去,然后让父组件去发送请求
     handleCategoryS3(category3Id) {
       // console.log(category3Id);
-      const categoryList = {
-        ...this.categoryList, //这个代表的是前面两个的id
-        category3Id,
-      };
-      this.$bus.$emit("accept",categoryList);
+      // const categoryList = {
+      //   ...this.categoryList, //这个代表的是前面两个的id
+      //   category3Id,
+      // };
+      this['category/SELECT_CATEGORY3ID'](this.categoryList.category3Id);
+      // this.$bus.$emit("accept", categoryList);
       //这里只负责把数据传过去,然后让父组件去发送请求
     },
   },
   //一上来就应该获取一级分类数据
   async mounted() {
-    const result = await this.$API.attrs.getCategoryS1();
-    // console.log(result);
-    if (result.code === 200) {
-      this.category1ListData = result.data;
-    } else {
-      this.$message.error(result.message);
-    }
+    // const result = await this.$API.attrs.getCategoryS1();
+    // // console.log(result);
+    // if (result.code === 200) {
+    //   this.category1ListData = result.data;
+    // } else {
+    //   this.$message.error(result.message);
+    // }
+    this['category/getCategory1ListData']();
   },
 };
 </script>

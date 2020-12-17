@@ -129,7 +129,7 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="save">保存</el-button>
-          <el-button>取消</el-button>
+          <el-button @click="backShowList">取消</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -208,6 +208,9 @@ export default {
                 spuId:13
   */
   methods: {
+    backShowList(spuList){
+      this.$emit("showList",{category1Id:this.spuList.category1Id,category2Id:this.spuList.category2Id,category3Id:this.spuList.category3Id})
+    },
     save() {
       this.$refs.spuRuleForm.validate(async (valid) => {
         if (valid) {

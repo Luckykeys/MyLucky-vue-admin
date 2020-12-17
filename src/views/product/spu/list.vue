@@ -24,27 +24,26 @@ export default {
   data() {
     return {
       isShowList: true,
-      isShowSpuDesList:false,
-      item: {},
-      //spuItem代表的是spu的基础数据需要传达sku界面
-      spuItem:{}
+      isShowSpuDesList: false,
+      item: {}, //item代表的是spuShowList页面的单条的基础数据需要传达spuUpdateList页面的数据
+      spuItem: {},//spuItem代表的是spuShowList页面的单条的基础数据需要传达spuDesList页面的数据
     };
   },
   methods: {
     //是否显示spuDes组件
-    showSpuDesList(row){
-      this.isShowSpuDesList = true
-      this.spuItem = {...row}
+    showSpuDesList(row,category) {
+      this.isShowSpuDesList = true;
+      this.spuItem = { ...row ,...category};
     },
-    showUpdateList(row) {
+    showUpdateList(row,category) {
       this.isShowList = false;
-      this.item = { ...row };
+      this.item = { ...row ,...category};
     },
     //显示showList页面的函数
-    showList(category3Id) {
+    showList(category) {
       this.isShowList = true;
       this.$nextTick(() => {
-        this.$bus.$emit("accept", { category3Id });
+        this.$bus.$emit("accept", category);
       });
     },
   },

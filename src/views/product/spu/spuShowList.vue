@@ -24,7 +24,7 @@
               size="mini"
               type="primary"
               icon="el-icon-edit"
-              @click="edit(row)"
+              @click="edit(row,categoryList)"
             ></el-button>
             <el-button size="mini" type="info" icon="el-icon-info"></el-button>
             <el-button
@@ -70,15 +70,15 @@ export default {
   },
   methods: {
     toSpuDesList(row,categoryList){
-      this.$emit("showSpuDesList",{...row,...categoryList})
+      this.$emit("showSpuDesList",{...row,...this.categoryList})
     },
     //点击添加新的SPU
     addNewSpu(){
       this.$emit("showUpdateList",{category3Id:this.categoryList.category3Id});
     },
     //点击编辑
-    edit(row) {
-      this.$emit("showUpdateList", row);
+    edit(row,category) {
+      this.$emit("showUpdateList", {...row,...this.categoryList});
     },
     //获取分页列表
     async getPageList(page, limit) {
