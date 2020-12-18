@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card>
-      <el-form label-width="80px" :model="sku" :rules="rules">
+      <el-form label-width="80px" :model="sku" :rules="rules" ref="skuForm">
         <!-- prop用作表单校验 -->
         <el-form-item label="SPU名称">
           <span>{{ spuList.spuName }}</span>
@@ -15,6 +15,7 @@
             style="width: 300px"
             controls-position="right"
             :min="0"
+            :max="200000000000"
             v-model="sku.price"
             placeholder="SKU价格"
           ></el-input-number>
@@ -25,6 +26,7 @@
             style="width: 300px"
             controls-position="right"
             :min="0"
+            :max="200000000000"
             v-model="sku.weight"
             placeholder="SKU重量"
           ></el-input-number>
@@ -42,10 +44,11 @@
             :key="attr.id"
             class="spuDesList-select-container"
           >
-            <el-form-item :label="attr.attrName" style="display:inline-block">
+            <el-form-item :label="attr.attrName" style="display: inline-block">
               <el-select
                 placeholder="请选择"
                 v-model="sku.skuAttrValueList[index]"
+                @change="clearValidate('skuAttrValueList')"
               >
                 <el-option
                   v-for="value in attr.attrValueList"
@@ -63,10 +66,14 @@
             :key="sale.id"
             class="spuDesList-select-container"
           >
-            <el-form-item :label="sale.saleAttrName" style="display:inline-block">
+            <el-form-item
+              :label="sale.saleAttrName"
+              style="display: inline-block"
+            >
               <el-select
                 placeholder="请选择"
                 v-model="sku.skuSaleAttrValueList[index]"
+                @change="clearValidate('skuSaleAttrValueList')"
               >
                 <el-option
                   v-for="attrValue in sale.spuSaleAttrValueList"
@@ -89,7 +96,12 @@
             style="width: 100%; margin: 20px 0"
             @selection-change="handleSelectionChange"
           >
-            <el-table-column type="selection" reserve-selection width="55" prop="isCheck">
+            <el-table-column
+              type="selection"
+              reserve-selection
+              width="55"
+              prop="isCheck"
+            >
             </el-table-column>
             <el-table-column label="图片" class="cell">
               <template v-slot="{ row }">
@@ -112,7 +124,7 @@
           </el-table>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary">保存</el-button>
+          <el-button type="primary" @click="save">保存</el-button>
           <el-button>取消</el-button>
         </el-form-item>
       </el-form>
@@ -138,7 +150,29 @@ export default {
       ImageList: [],
       spuSaleAttrList: [],
       attrsAllData: [],
-      rules: {},
+      rules: {
+        skuName: [
+          { required: true, message: "请输入SKU名称", trigger: "change" },
+        ],
+        price: [
+          { required: true, message: "请输入SKU价格", trigger: "change" },
+        ],
+        weight: [
+          { required: true, message: "请输入SKU重量", trigger: "change" },
+        ],
+        skuDesc: [
+          { required: true, message: "请输入SKU描述", trigger: "change" },
+        ],
+        skuAttrValueList: [
+          { required: true, validator: this.skuAttrValueListValidator },
+        ],
+        skuSaleAttrValueList: [
+          { required: true, validator: this.skuSaleAttrValueListValidator },
+        ],
+        skuImageList: [
+          { required: true, validator: this.skuImageListValidator },
+        ],
+      },
     };
   },
   computed: {
@@ -147,8 +181,58 @@ export default {
     }),
   },
   methods: {
+    save() {
+      this.$refs.skuForm.validate((valid) => {
+        if (valid) {
+          console.log("校验成功~");
+        }
+      });
+    },
+    //清空表单校验
+    clearValidate(prop){
+      this.$refs.skuForm.clearValidate(prop)
+    },
+    //校验平台属性
+    skuAttrValueListValidator(rule, value, callback) {
+      // console.log(rule, value, callback);
+      //判断是否是全选和是否包含undefined
+      //如果选择的值的长度和请求回来的数据的值的长度不一样则表示不是全选，并且选择的选项中不应该又undefined,true表示包含undefined
+      const { attrsAllData, sku: {skuAttrValueList} } = this;
+      if (
+        attrsAllData.length !== skuAttrValueList.length ||
+        !skuAttrValueList.some((attr) => attr)
+      ) {
+        callback(new Error("请选择所有的平台属性"));
+        return;
+      }
+      callback();
+    },
+    //校验销售属性
+    skuSaleAttrValueListValidator(rule, value, callback) {
+      const { spuSaleAttrList, sku: {skuSaleAttrValueList} } = this;
+      if (
+        spuSaleAttrList.length !== skuSaleAttrValueList.length ||
+        !skuSaleAttrValueList.some((sale) => sale)
+      ) {
+        callback(new Error("请选择所有的销售属性"));
+      }
+      callback();
+    },
+    //校验图片,至少选中一张图片并且有默认值得选项
+    skuImageListValidator(rule, value, callback) {
+      const { sku: {skuImageList} } = this;
+      console.log(skuImageList)
+      if (skuImageList.length === 0) {
+        callback(new Error("请至少选中一张图片"));
+      }
+      if (!skuImageList.some((img) => img.isDefault)) {
+        callback(new Error("请至少选中一张默认图片"));
+      }
+      callback();
+    },
     setDefault(id) {
       console.log(id);
+      this.clearValidate()
       this.ImageList = this.ImageList.map((item) => {
         return {
           ...item, //解构所有的数据，下面的修改会覆盖上面的数据
@@ -157,7 +241,7 @@ export default {
       });
     },
     handleSelectionChange(ImageList) {
-      console.log(ImageList);
+      // console.log(ImageList);
       this.sku.skuImageList = ImageList;
     },
     //获取单个spu销售属性的请求
