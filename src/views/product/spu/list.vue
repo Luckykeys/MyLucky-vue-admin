@@ -1,6 +1,6 @@
 <template>
   <div>
-    <SpuDesList v-if="isShowSpuDesList" :spuItem="spuItem"></SpuDesList>
+    <SpuDesList v-if="isShowSpuDesList" :spuItem="spuItem" @showList="showList"></SpuDesList>
     <div v-else>
       <Category :disabled="!isShowList"></Category>
       <SpuShowList
@@ -44,6 +44,7 @@ export default {
     //显示showList页面的函数
     showList(category) {
       this.isShowList = true;
+      this.isShowSpuDesList = false
       // this.$nextTick(() => {
       //   this.$bus.$emit("accept", category);
       // });

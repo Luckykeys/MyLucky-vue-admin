@@ -88,44 +88,46 @@
         <el-form-item label="图片列表" prop="skuImageList">
           <!-- ref="multipleTable" -->
           <!--row-key="id" 这个id会自己去ImageList数据中寻找id  -->
-          <el-table
-            row-key="id"
-            :data="ImageList"
-            border
-            tooltip-effect="dark"
-            style="width: 100%; margin: 20px 0"
-            @selection-change="handleSelectionChange"
-          >
-            <el-table-column
-              type="selection"
-              reserve-selection
-              width="55"
-              prop="isCheck"
+          <el-form-item>
+            <el-table
+              row-key="id"
+              :data="ImageList"
+              border
+              tooltip-effect="dark"
+              style="width: 100%; margin: 20px 0"
+              @selection-change="handleSelectionChange"
             >
-            </el-table-column>
-            <el-table-column label="图片" class="cell">
-              <template v-slot="{ row }">
-                <img :src="row.imgUrl" :alt="row.imgName" />
-              </template>
-            </el-table-column>
-            <el-table-column label="名称" prop="imgName"></el-table-column>
-            <el-table-column label="操作">
-              <template v-slot="{ row }">
-                <el-button
-                  v-show="!row.isDefault"
-                  type="primary"
-                  size="mini"
-                  @click="setDefault(row.id)"
-                  >设为默认</el-button
-                >
-                <el-tag v-show="row.isDefault" type="success">默认</el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
+              <el-table-column
+                type="selection"
+                reserve-selection
+                width="55"
+                prop="isCheck"
+              >
+              </el-table-column>
+              <el-table-column label="图片" class="cell">
+                <template v-slot="{ row }">
+                  <img :src="row.imgUrl" :alt="row.imgName" />
+                </template>
+              </el-table-column>
+              <el-table-column label="名称" prop="imgName"></el-table-column>
+              <el-table-column label="操作">
+                <template v-slot="{ row }">
+                  <el-button
+                    v-show="!row.isDefault"
+                    type="primary"
+                    size="mini"
+                    @click="setDefault(row.id)"
+                    >设为默认</el-button
+                  >
+                  <el-tag v-show="row.isDefault" type="success">默认</el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-form-item>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="save">保存</el-button>
-          <el-button>取消</el-button>
+          <el-button @click="cancelBack">取消</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -133,6 +135,7 @@
 </template>
 
 <script>
+/* skuId根本不需要，因为我们现在是保存数据，根本就没有skuId */
 import { mapState } from "vuex";
 export default {
   name: "SpuDesList",
@@ -180,24 +183,108 @@ export default {
       categoryList: (state) => state.category.categoryList,
     }),
   },
+  /*
+    {
+  "category3Id": 0,
+  "id": 0,//由后台生成
+  "isSale": 0,
+  "price": 0,
+  "skuAttrValueList": [
+    {
+      "attrId": 0,
+      "id": 0,
+      "skuId": 0,
+      "valueId": 0
+    }
+  ],
+  "skuDefaultImg": "string",
+  "skuDesc": "string",
+  "skuImageList": [
+    {
+      "id": 0,
+      "imgName": "string",
+      "imgUrl": "string",
+      "isDefault": "string",
+      "skuId": 0,
+      "spuImgId": 0
+    }
+  ],
+  "skuName": "string",
+  "skuSaleAttrValueList": [
+    {
+      "id": 0,
+      "saleAttrValueId": 0,
+      "skuId": 0,
+      "spuId": 0
+    }
+  ],
+  "spuId": 0,
+  "tmId": 0,
+  "weight": "string"
+}
+  */
   methods: {
+    cancelBack() {
+      this.$emit("showList");
+    },
     save() {
-      this.$refs.skuForm.validate((valid) => {
+      this.$refs.skuForm.validate(async (valid) => {
         if (valid) {
           console.log("校验成功~");
+          const { category3Id, id: spuId, tmId } = this.spuList;
+          const skuAttrValueList = this.sku.skuAttrValueList.map((item) => {
+            const [attrId, valueId] = item.split("-");
+            return {
+              attrId,
+              valueId,
+            };
+          });
+          const skuDefaultImg = this.sku.skuImageList.find(
+            (img) => img.isDefault
+          ).imgUrl;
+          const skuSaleAttrValueList = this.sku.skuSaleAttrValueList.map(
+            (saleAttrValueId) => {
+              return {
+                saleAttrValueId,
+                spuId,
+              };
+            }
+          );
+          const result = await this.$API.sku.saveSkuInfo({
+            ...this.sku,
+            skuAttrValueList,
+            skuDefaultImg,
+            skuSaleAttrValueList,
+            spuId,
+            tmId,
+            category3Id,
+          });
+          console.log(result);
+          if (result.code === 200) {
+            this.$message.success("保存SKU数据成功");
+            this.$emit("showList");
+          } else {
+            this.$message.error(result.message);
+          }
+        } else {
+          console.log("error submit!!");
+          return false;
         }
       });
     },
     //清空表单校验
-    clearValidate(prop){
-      this.$refs.skuForm.clearValidate(prop)
+    clearValidate(prop) {
+      this.$refs.skuForm.clearValidate(prop);
     },
     //校验平台属性
     skuAttrValueListValidator(rule, value, callback) {
       // console.log(rule, value, callback);
       //判断是否是全选和是否包含undefined
       //如果选择的值的长度和请求回来的数据的值的长度不一样则表示不是全选，并且选择的选项中不应该又undefined,true表示包含undefined
-      const { attrsAllData, sku: {skuAttrValueList} } = this;
+      const {
+        attrsAllData,
+        sku: { skuAttrValueList },
+      } = this;
       if (
         attrsAllData.length !== skuAttrValueList.length ||
         !skuAttrValueList.some((attr) => attr)
@@ -209,7 +296,10 @@ export default {
     },
     //校验销售属性
     skuSaleAttrValueListValidator(rule, value, callback) {
-      const { spuSaleAttrList, sku: {skuSaleAttrValueList} } = this;
+      const {
+        spuSaleAttrList,
+        sku: { skuSaleAttrValueList },
+      } = this;
       if (
         spuSaleAttrList.length !== skuSaleAttrValueList.length ||
         !skuSaleAttrValueList.some((sale) => sale)
@@ -220,8 +310,10 @@ export default {
     },
     //校验图片,至少选中一张图片并且有默认值得选项
     skuImageListValidator(rule, value, callback) {
-      const { sku: {skuImageList} } = this;
-      console.log(skuImageList)
+      const {
+        sku: { skuImageList },
+      } = this;
+      console.log(skuImageList);
       if (skuImageList.length === 0) {
         callback(new Error("请至少选中一张图片"));
       }
@@ -232,10 +324,16 @@ export default {
     },
     setDefault(id) {
       console.log(id);
-      this.clearValidate()
+      this.clearValidate();
       this.ImageList = this.ImageList.map((item) => {
         return {
           ...item, //解构所有的数据，下面的修改会覆盖上面的数据
+          isDefault: id === item.id ? true : false,
+        };
+      });
+      this.sku.skuImageList = this.sku.skuImageList.map((item) => {
+        return {
+          ...item,
           isDefault: id === item.id ? true : false,
         };
       });
