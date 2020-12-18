@@ -80,6 +80,12 @@ export default {
     //选择三级分类id的时候不需要发送请求
     SELECT_CATEGORY3ID(state,category3Id){
       state.categoryList.category3Id = category3Id
+    },
+    RESET_CATEGORYLIST_ID(state){
+      state.categoryList.category1Id = ""
+      state.categoryList.category2Id = ""
+      state.categoryList.category3Id = ""
+
     }
   },
   getters: {}

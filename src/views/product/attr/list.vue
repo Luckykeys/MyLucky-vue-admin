@@ -30,16 +30,18 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150">
-          <template v-slot="{ row, $index }">
+          <template v-slot="{ row }">
             <el-button size="mini" type="warning" @click="update(row)"
               ><i class="el-icon-edit"></i
             ></el-button>
-            <el-button
-              size="mini"
-              type="danger"
-              @click="delAttValueOnePage($index)"
-              ><i class="el-icon-delete"></i
-            ></el-button>
+            <el-popconfirm
+              @onConfirm="delAttValueOnePage(row.id)"
+              :title="`您确定删除${row.attrName}吗？`"
+            >
+              <el-button size="mini" type="danger" slot="reference"
+                ><i class="el-icon-delete"></i
+              ></el-button>
+            </el-popconfirm>
           </template>
         </el-table-column>
       </el-table>
@@ -51,6 +53,7 @@
           <el-input v-model="attr.attrName"></el-input>
         </el-form-item>
       </el-form>
+
       <el-button
         type="primary"
         :disabled="!attr.attrName"
@@ -108,7 +111,10 @@
 </template>
 
 <script>
-import {mapState} from "vuex"
+import {
+  mapState,
+  // mapMutations
+} from "vuex";
 import Category from "@/components/Category/category.vue";
 export default {
   name: "AttrList",
@@ -116,9 +122,9 @@ export default {
     return {
       attrsAllData: [],
       // categoryList: {
-        // category1Id: "",
-        // category2Id: "",
-        // category3Id: "",
+      // category1Id: "",
+      // category2Id: "",
+      // category3Id: "",
       // },
       // loading: true,
       isShowAdd: true,
@@ -129,31 +135,34 @@ export default {
       },
     };
   },
-  computed:{
+  computed: {
     ...mapState({
-      categoryList:(state)=>state.category.categoryList
-    })
+      categoryList: (state) => state.category.categoryList,
+    }),
   },
-  watch:{
+  watch: {
     //监视三级分类列表然后发送请求下面展示数据
-    'categoryList.category3Id'(category3Id){
-      if(!category3Id) return;
-      this.getAttrsLists()
+    "categoryList.category3Id"(category3Id) {
+      if (!category3Id) return;
+      this.getAttrsLists();
     },
-    'categoryList.category1Id'(){
-      this.clearList()
+    "categoryList.category1Id"() {
+      this.clearList();
     },
-    'categoryList.category2Id'(){
-      this.clearList()
-    }
+    "categoryList.category2Id"() {
+      this.clearList();
+    },
   },
   methods: {
+    // ...mapMutations(["categoryList/RESET_CATEGORYLIST_ID"]),
     //接收子组件传过来的result.data数据
     async getAttrsLists() {
       // console.log(categoryList);
       //categoryList 是需要的三个id,因为子组件只是简单的传递数据，父组件发送请求
       // this.categoryList = categoryList;
-      const result = await this.$API.attrs.getCategoryAllList(this.categoryList);
+      const result = await this.$API.attrs.getCategoryAllList(
+        this.categoryList
+      );
       console.log(result);
       if (result.code === 200) {
         //发送请求回来的数据给到定义的数据进行遍历展示
@@ -201,13 +210,19 @@ export default {
         this.$refs.input.focus();
       });
     },
-    delAttValueOnePage(index) {
-      console.log(index);
+    async delAttValueOnePage(id) {
+      const result = await this.$API.attrs.deleteAttr(id);
+      console.log(result);
+      // console.log(index);
+      if (result.code === 200) {
+        this.$message.success("删除成功");
+        this.getAttrsLists(); //再重新发送一次请求
+      } else {
+        this.$message.error(result.message);
+      }
     },
     //点击删除删除当前这一条
     delAttValueTwoPage(index) {
-      console.log(111);
-      console.log(index);
       this.attr.attrValueList.splice(index, 1);
     },
     //保存已经修改好的所有属性
@@ -217,7 +232,7 @@ export default {
       const data = this.attr;
       if (isAdd) {
         //代表是添加的时候，是没有id的
-        data.categoryId = this.category.category3Id;
+        data.categoryId = this.categoryList.category3Id;
         data.categoryLevel = 3;
       }
       //修改页面保存后发送保存的请求
@@ -246,10 +261,12 @@ export default {
   //   this.$bus.$on("accept", this.getAttrsLists);
   //   this.$bus.$on("clearList",this.clearList)
   // },
-  // beforeDestroy() {
-  //   this.$bus.$off("accept", this.getAttrsLists);
-  //   this.$bus.$off("clearList",this.clearList)
-  // },
+  beforeDestroy() {
+    // this.$bus.$off("accept", this.getAttrsLists);
+    // this.$bus.$off("clearList",this.clearList)
+    // this["categoryList/RESET_CATEGORYLIST_ID"]();
+    this.$store.commit("category/RESET_CATEGORYLIST_ID");
+  },
   components: {
     Category,
   },

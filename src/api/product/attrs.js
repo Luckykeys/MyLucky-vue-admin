@@ -37,5 +37,12 @@ export default {
       url: `${api_name}/saveAttrInfo`,
       data:attr
     });
+  },
+  // 删除整条属性   /admin/product/deleteAttr/{attrId}
+  deleteAttr(attrId){
+    return request({
+      method:"DELETE",
+      url:`${api_name}/deleteAttr/${attrId}`
+    })
   }
 };

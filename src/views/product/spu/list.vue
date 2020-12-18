@@ -15,6 +15,7 @@
 </template>
 
 <script>
+// import {mapMutations} from "vuex"
 import Category from "@/components/Category/category.vue";
 import SpuShowList from "./spuShowList";
 import SpuUpdateList from "./spuUpdateList";
@@ -26,18 +27,19 @@ export default {
       isShowList: true,
       isShowSpuDesList: false,
       item: {}, //item代表的是spuShowList页面的单条的基础数据需要传达spuUpdateList页面的数据
-      spuItem: {},//spuItem代表的是spuShowList页面的单条的基础数据需要传达spuDesList页面的数据
+      spuItem: {}, //spuItem代表的是spuShowList页面的单条的基础数据需要传达spuDesList页面的数据
     };
   },
   methods: {
+    // ...mapMutations(['categoryList/RESET_CATEGORYLIST_ID']),
     //是否显示spuDes组件
-    showSpuDesList(row,category) {
+    showSpuDesList(row, category) {
       this.isShowSpuDesList = true;
-      this.spuItem = { ...row ,...category};
+      this.spuItem = { ...row, ...category };
     },
-    showUpdateList(row,category) {
+    showUpdateList(row, category) {
       this.isShowList = false;
-      this.item = { ...row ,...category};
+      this.item = { ...row, ...category };
     },
     //显示showList页面的函数
     showList(category) {
@@ -53,6 +55,10 @@ export default {
     SpuShowList,
     SpuUpdateList,
     SpuDesList,
+  },
+  beforeDestroy() {
+    // this["categoryList/RESET_CATEGORYLIST_ID"]()
+    this.$store.commit("category/RESET_CATEGORYLIST_ID");
   },
 };
 </script>

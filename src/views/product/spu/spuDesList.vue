@@ -138,7 +138,7 @@ export default {
         category2Id: this.spuList.category2Id,
         category3Id: this.spuList.category3Id,
       });
-      console.log(result);
+      // console.log(result);
       if (result.code === 200) {
         //发送请求回来的数据给到定义的数据进行遍历展示
         this.attrsAllData = result.data;
