@@ -54,5 +54,5 @@ export default {
       url:`${api_name}/saveSpuInfo`,
       data:spu
     })
-  }
+  },
 };

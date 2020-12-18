@@ -1,13 +1,13 @@
 <template>
   <div>
     <el-card>
-      <el-form label-width="80px">
+      <el-form label-width="80px" :model="sku" :rules="rules">
         <!-- prop用作表单校验 -->
-        <el-form-item label="SPU名称" prop="spuName">
+        <el-form-item label="SPU名称">
           <span>{{ spuList.spuName }}</span>
         </el-form-item>
         <el-form-item label="SKU名称" prop="skuName">
-          <el-input placeholder="SKU 名称"></el-input>
+          <el-input placeholder="SKU 名称" v-model="sku.skuName"></el-input>
         </el-form-item>
         <el-form-item label="价格(元)" prop="price">
           <el-input-number
@@ -15,77 +15,99 @@
             style="width: 300px"
             controls-position="right"
             :min="0"
-            v-model="priceNum"
+            v-model="sku.price"
             placeholder="SKU价格"
           ></el-input-number>
         </el-form-item>
-        <el-form-item label="重量(千克)">
+        <el-form-item label="重量(千克)" prop="weight">
           <el-input-number
             align="left"
             style="width: 300px"
             controls-position="right"
             :min="0"
-            v-model="weightNum"
+            v-model="sku.weight"
             placeholder="SKU重量"
           ></el-input-number>
         </el-form-item>
         <el-form-item label="规格描述" prop="skuDesc">
-          <el-input type="textarea" placeholder="SKU规格描述"></el-input>
+          <el-input
+            type="textarea"
+            placeholder="SKU规格描述"
+            v-model="sku.skuDesc"
+          ></el-input>
         </el-form-item>
-        <el-form-item label="平台属性">
+        <el-form-item label="平台属性" prop="skuAttrValueList">
           <div
-            v-for="attr in attrsAllData"
+            v-for="(attr, index) in attrsAllData"
             :key="attr.id"
             class="spuDesList-select-container"
           >
-            <span>{{ attr.attrName }}</span>
-            <el-select placeholder="请选择">
-              <el-option
-                v-for="value in attr.attrValueList"
-                :key="value.id"
-                :value="value.id"
-                :label="value.valueName"
-              ></el-option>
-            </el-select>
+            <el-form-item :label="attr.attrName" style="display:inline-block">
+              <el-select
+                placeholder="请选择"
+                v-model="sku.skuAttrValueList[index]"
+              >
+                <el-option
+                  v-for="value in attr.attrValueList"
+                  :key="value.id"
+                  :value="`${attr.id}-${value.id}`"
+                  :label="value.valueName"
+                ></el-option>
+              </el-select>
+            </el-form-item>
           </div>
         </el-form-item>
-        <el-form-item label="销售属性">
+        <el-form-item label="销售属性" prop="skuSaleAttrValueList">
           <div
-            v-for="sale in spuSaleAttrList"
+            v-for="(sale, index) in spuSaleAttrList"
             :key="sale.id"
             class="spuDesList-select-container"
           >
-            <span>{{ sale.saleAttrName }}</span>
-            <el-select placeholder="请选择">
-              <el-option
-                v-for="attrValue in sale.spuSaleAttrValueList"
-                :key="attrValue.id"
-                :value="attrValue.id"
-                :label="attrValue.saleAttrValueName"
-              ></el-option>
-            </el-select>
+            <el-form-item :label="sale.saleAttrName" style="display:inline-block">
+              <el-select
+                placeholder="请选择"
+                v-model="sku.skuSaleAttrValueList[index]"
+              >
+                <el-option
+                  v-for="attrValue in sale.spuSaleAttrValueList"
+                  :key="attrValue.id"
+                  :value="attrValue.id"
+                  :label="attrValue.saleAttrValueName"
+                ></el-option>
+              </el-select>
+            </el-form-item>
           </div>
         </el-form-item>
-        <el-form-item label="图片列表">
+        <el-form-item label="图片列表" prop="skuImageList">
           <!-- ref="multipleTable" -->
+          <!--row-key="id" 这个id会自己去ImageList数据中寻找id  -->
           <el-table
+            row-key="id"
             :data="ImageList"
             border
             tooltip-effect="dark"
             style="width: 100%; margin: 20px 0"
             @selection-change="handleSelectionChange"
           >
-            <el-table-column type="selection" width="55" prop="isCheck">
+            <el-table-column type="selection" reserve-selection width="55" prop="isCheck">
             </el-table-column>
             <el-table-column label="图片" class="cell">
-              <template slot-scope="scope">
-                <img :src="scope.row.imgUrl" :alt="scope.row.imgName" />
+              <template v-slot="{ row }">
+                <img :src="row.imgUrl" :alt="row.imgName" />
               </template>
             </el-table-column>
-            <el-table-column prop="name" label="名称">
-            </el-table-column>
+            <el-table-column label="名称" prop="imgName"></el-table-column>
             <el-table-column label="操作">
-              <el-button type="primary" size="mini">设为默认</el-button>
+              <template v-slot="{ row }">
+                <el-button
+                  v-show="!row.isDefault"
+                  type="primary"
+                  size="mini"
+                  @click="setDefault(row.id)"
+                  >设为默认</el-button
+                >
+                <el-tag v-show="row.isDefault" type="success">默认</el-tag>
+              </template>
             </el-table-column>
           </el-table>
         </el-form-item>
@@ -99,6 +121,7 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
 export default {
   name: "SpuDesList",
   props: {
@@ -106,17 +129,37 @@ export default {
   },
   data() {
     return {
-      priceNum: 0,
-      weightNum:0,
       spuList: this.spuItem, //spuShowList页面传过来的spu单条的数据
-      sku: {}, // sku数据
+      sku: {
+        skuAttrValueList: [], //平台属性
+        skuImageList: [], //图片
+        skuSaleAttrValueList: [], //销售属性
+      }, // sku数据
       ImageList: [],
       spuSaleAttrList: [],
       attrsAllData: [],
+      rules: {},
     };
   },
+  computed: {
+    ...mapState({
+      categoryList: (state) => state.category.categoryList,
+    }),
+  },
   methods: {
-    handleSelectionChange() {},
+    setDefault(id) {
+      console.log(id);
+      this.ImageList = this.ImageList.map((item) => {
+        return {
+          ...item, //解构所有的数据，下面的修改会覆盖上面的数据
+          isDefault: id === item.id ? true : false,
+        };
+      });
+    },
+    handleSelectionChange(ImageList) {
+      console.log(ImageList);
+      this.sku.skuImageList = ImageList;
+    },
     //获取单个spu销售属性的请求
     async getSpuSaleAttrList() {
       const { id } = this.spuList;
@@ -128,19 +171,15 @@ export default {
         this.$message.error(result.message);
       }
     },
-    //接收子组件传过来的result.data数据
-    async getAttrsLists(categoryList) {
+    //接收子组件传过来的result.data数据,请求数据的平台属性数据
+    async getAttrsLists() {
       // console.log(categoryList);
       //categoryList 是需要的三个id,因为子组件只是简单的传递数据，父组件发送请求
       // this.categoryList = categoryList;
-      const result = await this.$API.attrs.getCategoryAllList({
-        category1Id: this.spuList.category1Id,
-        category2Id: this.spuList.category2Id,
-        category3Id: this.spuList.category3Id,
-      });
-      // console.log(result);
+      const result = await this.$API.attrs.getCategoryAllList(
+        this.categoryList
+      );
       if (result.code === 200) {
-        //发送请求回来的数据给到定义的数据进行遍历展示
         this.attrsAllData = result.data;
         this.$message.success("请求数据的平台属性数据成功");
       } else {
@@ -172,6 +211,8 @@ export default {
 .spuDesList-select-container
   display: inline-block
   margin-right: 20px
+  width: 30%
+  margin-bottom: 10px
 .cell img
   width: 100px
   height: 100px
