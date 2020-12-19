@@ -1,15 +1,19 @@
 <template>
   <div>
+    <el-card>
     <el-table :data="skuDataList" border stripe style="width: 100%">
-      <el-table-column label="序号" width="80" type="index"> </el-table-column>
-      <el-table-column prop="skuName" label="名称"> </el-table-column>
+      <el-table-column label="序号" width="80" type="index" align="center"> </el-table-column>
+      <el-table-column prop="skuName" label="名称"></el-table-column>
       <el-table-column prop="skuDesc" label="描述"> </el-table-column>
-      <el-table-column prop="skuDefaultImg" label="默认图片" width="150">
+      <el-table-column prop="skuDefaultImg" label="默认图片" width="150" align="center">
+        <template v-slot="{ row }">
+                  <img :src="row.skuDefaultImg" :alt="row.skuName" style="width:80px;height:80px;"/>
+                </template>
       </el-table-column>
       <el-table-column prop="weight" label="重量(KG)"> </el-table-column>
       <el-table-column prop="price" label="价格(元)" width="80">
       </el-table-column>
-      <el-table-column label="操作" width="250">
+      <el-table-column label="操作" width="250" align="center">
         <template>
           <el-button
             size="mini"
@@ -42,6 +46,7 @@
       class="pagination"
     >
     </el-pagination>
+    </el-card>
   </div>
 </template>
 
@@ -86,3 +91,4 @@ export default {
   },
 };
 </script>
+

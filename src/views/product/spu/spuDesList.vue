@@ -230,7 +230,7 @@ export default {
     save() {
       this.$refs.skuForm.validate(async (valid) => {
         if (valid) {
-          console.log("校验成功~");
+          // console.log("校验成功~");
           const { category3Id, id: spuId, tmId } = this.spuList;
           const skuAttrValueList = this.sku.skuAttrValueList.map((item) => {
             const [attrId, valueId] = item.split("-");
@@ -259,7 +259,7 @@ export default {
             tmId,
             category3Id,
           });
-          console.log(result);
+          // console.log(result);
           if (result.code === 200) {
             this.$message.success("保存SKU数据成功");
             this.$emit("showList");
@@ -313,7 +313,7 @@ export default {
       const {
         sku: { skuImageList },
       } = this;
-      console.log(skuImageList);
+      // console.log(skuImageList);
       if (skuImageList.length === 0) {
         callback(new Error("请至少选中一张图片"));
       }
@@ -323,7 +323,7 @@ export default {
       callback();
     },
     setDefault(id) {
-      console.log(id);
+      // console.log(id);
       this.clearValidate();
       this.ImageList = this.ImageList.map((item) => {
         return {

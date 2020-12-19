@@ -143,10 +143,11 @@ export default {
       this.getPageList(page, this.limit);
       // console.log(page,this.limit)
     },
-    async getPageList(page, limit) {
+    async getPageList(page=1) {
       this.loading = true;
+      this.page = page
       //page--->当前在第几页, limit--->默认一页显示多少条
-      const result = await this.$API.trademark.getPageList(page, limit);
+      const result = await this.$API.sku.getSkuList(this.page,this.limit);
       // console.log(result);
       if (result.code === 200) {
         this.$message.success("获取分页列表请求成功");
