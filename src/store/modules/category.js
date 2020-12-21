@@ -1,7 +1,7 @@
 //vuex集中管理三级分类列表的数据
 import { Message } from "element-ui";
-import * as API from "@/api";
-
+// import * as API from "@/api";
+import API from "@/api"
 export default {
   namespaced: true,
   state: {
